@@ -81,7 +81,7 @@
       (array (let ((temp (concatenate 'string
                                       "t"
                                       (write-to-string (emit-symbol (gensym)))))
-                   (index 0))
+                   (index 1))
                (concatenate 'string
                             "(function() local "
                             temp
@@ -223,6 +223,33 @@
                                                                (decf args-left))
                                                              ""))))
                           " end"))
+      (doarray (if (< (length args) 1)
+                   (error (concatenate 'string
+                                       "DOARRAY accepts a minimum of one argument. "
+                                       (write-to-string (length args))
+                                       " given."))
+                   (let ((binding (first args)))
+                     (if (< (length binding) 2)
+                         (error (concatenate 'string
+                                             "DOARRAY binding accepts a minimum of two elements "
+                                             (write-to-string (length binding))
+                                             " given."))
+                         (concatenate 'string
+                                      "for _, "
+                                      (emit-expression (first binding))
+                                      " in ipairs("
+                                      (emit-expression (second binding))
+                                      ") do "
+                                      (let ((args-left (length (rest args))))
+                                        (collect-string (arg (rest args))
+                                                        (concatenate 'string
+                                                                     (emit-expression arg)
+                                                                     (if (/= args-left 1)
+                                                                         (prog1
+                                                                             " "
+                                                                           (decf args-left))
+                                                                         ""))))
+                                      " end")))))
       (when (concatenate 'string
                          "if "
                          (emit-expression (first args))
@@ -315,6 +342,30 @@
                           "("
                           (emit-expression (first args))
                           "+"
+                          (emit-expression (second args))
+                          ")")))
+      (/ (if (/= (length args) 2)
+             (error (concatenate 'string "/ accepts two arguments. " (write-to-string (length args)) " given."))
+             (concatenate 'string
+                          "("
+                          (emit-expression (first args))
+                          "/"
+                          (emit-expression (second args))
+                          ")")))
+      (% (if (/= (length args) 2)
+             (error (concatenate 'string "% accepts two arguments. " (write-to-string (length args)) " given."))
+             (concatenate 'string
+                          "("
+                          (emit-expression (first args))
+                          "%"
+                          (emit-expression (second args))
+                          ")")))
+      (* (if (/= (length args) 2)
+             (error (concatenate 'string "* accepts two arguments. " (write-to-string (length args)) " given."))
+             (concatenate 'string
+                          "("
+                          (emit-expression (first args))
+                          "*"
                           (emit-expression (second args))
                           ")")))
       (elt (if (/= (length args) 2)
